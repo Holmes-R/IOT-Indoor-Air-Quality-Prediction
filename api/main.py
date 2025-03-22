@@ -6,7 +6,7 @@ from models.dtmc_model import predict_next_state
 from models.ekf_filter import apply_ekf
 from pydantic import BaseModel
 from api.thingsboard_api import send_data_to_thingsboard  # ✅ Import the function
-from iaq_calculations import calculate_aqi, calculate_vr, calculate_ppd, calculate_sia
+from api.iaq_calculations import calculate_aqi, calculate_vr, calculate_ppd, calculate_sia
 
 
 app = FastAPI()
@@ -33,6 +33,7 @@ print("Model Raw Prediction:", prediction)
 le = joblib.load("models/label_encoder.joblib")
 predicted_category = le.inverse_transform(prediction)[0]
 print("Predicted Category:", predicted_category)'''
+
 
 # ✅ Define Input Schema for Air Quality Prediction
 class AirQualityInput(BaseModel):
@@ -67,50 +68,20 @@ def predict_air_quality(input_data: AirQualityInput):
     # ✅ Predict future state using DTMC
     future_state = predict_next_state(predicted_category)
 
-    # ✅ Prepare data for ThingsBoard
-    thingsboard_data = {
-        "NH3": input_data.NH3,
-        "NO2": input_data.NO2,
-        "Carbon_Monoxide": input_data.Carbon_Monoxide,
-        "PM2_5": input_data.PM2_5,
-        "Temperature": input_data.Temperature,
-        "Pressure": input_data.Pressure,
-        "Humidity": input_data.Humidity,
-        "O3": input_data.O3,
-        "Future_Air_Quality": future_state  # ✅ Include future quality
-    }
-
-    # ✅ Send data to ThingsBoard
-    send_data_to_thingsboard(thingsboard_data)
-
-    return {"future_quality": future_state}  # ✅ Only return future quality
-
-
-# ✅ Define Input Schema for IAQ Metrics Calculation
-class IAQInput(BaseModel):
-    CO2: float
-    PM2_5: float
-    NO2: float
-    O3: float
-    Temperature: float
-    Humidity: float
-
-@app.post("/compute_iaq/")
-def compute_iaq(data: IAQInput):
-    """
-    API Endpoint to compute AQI, VR, PPD, SIA, and send data to ThingsBoard.
-    """
     # ✅ Compute IAQ Metrics
-    aqi = calculate_aqi(data.PM2_5, data.NO2, data.O3)
-    vr = calculate_vr(data.CO2)
-    ppd = calculate_ppd(data.Temperature, data.Humidity)
+    aqi = calculate_aqi(input_data.PM2_5, input_data.NO2, input_data.O3)
+    vr = calculate_vr(input_data.Pressure)  # Assuming Pressure relates to VR
+    ppd = calculate_ppd(input_data.Temperature, input_data.Humidity)
     sia = calculate_sia(aqi, vr, ppd)
 
-    # ✅ Prepare sensor data for ThingsBoard
-    sensor_data = data.dict()
-    sensor_data.update({"AQI": aqi, "VR": vr, "PPD": ppd, "SIA": sia})
+    sensor_data = input_data.dict()
+    sensor_data.update({
+        "Future_Air_Quality": future_state,
+        "AQI": aqi,
+        "PPD": ppd,
+        "SIA": sia
+    })
 
-    # ✅ Send data to ThingsBoard
     send_data_to_thingsboard(sensor_data)
 
-    return {"AQI": aqi, "VR": vr, "PPD": ppd, "SIA": sia, "message": "Data sent to ThingsBoard"}
+    return {"future_quality": future_state}  
