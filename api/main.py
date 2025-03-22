@@ -6,6 +6,7 @@ from models.dtmc_model import predict_next_state
 from models.ekf_filter import apply_ekf
 from pydantic import BaseModel
 from api.thingsboard_api import send_data_to_thingsboard  # ✅ Import the function
+from iaq_calculations import calculate_aqi, calculate_vr, calculate_ppd, calculate_sia
 
 
 app = FastAPI()
@@ -33,6 +34,7 @@ le = joblib.load("models/label_encoder.joblib")
 predicted_category = le.inverse_transform(prediction)[0]
 print("Predicted Category:", predicted_category)'''
 
+# ✅ Define Input Schema for Air Quality Prediction
 class AirQualityInput(BaseModel):
     NH3: float
     NO2: float
@@ -41,7 +43,7 @@ class AirQualityInput(BaseModel):
     Temperature: float
     Pressure: float
     Humidity: float
-    O3: float  # ✅ Ensure O3 is included
+    O3: float  
 
 @app.post("/predict/")
 def predict_air_quality(input_data: AirQualityInput):
@@ -65,7 +67,7 @@ def predict_air_quality(input_data: AirQualityInput):
     # ✅ Predict future state using DTMC
     future_state = predict_next_state(predicted_category)
 
-    # ✅ Prepare data in the correct format
+    # ✅ Prepare data for ThingsBoard
     thingsboard_data = {
         "NH3": input_data.NH3,
         "NO2": input_data.NO2,
@@ -82,3 +84,33 @@ def predict_air_quality(input_data: AirQualityInput):
     send_data_to_thingsboard(thingsboard_data)
 
     return {"future_quality": future_state}  # ✅ Only return future quality
+
+
+# ✅ Define Input Schema for IAQ Metrics Calculation
+class IAQInput(BaseModel):
+    CO2: float
+    PM2_5: float
+    NO2: float
+    O3: float
+    Temperature: float
+    Humidity: float
+
+@app.post("/compute_iaq/")
+def compute_iaq(data: IAQInput):
+    """
+    API Endpoint to compute AQI, VR, PPD, SIA, and send data to ThingsBoard.
+    """
+    # ✅ Compute IAQ Metrics
+    aqi = calculate_aqi(data.PM2_5, data.NO2, data.O3)
+    vr = calculate_vr(data.CO2)
+    ppd = calculate_ppd(data.Temperature, data.Humidity)
+    sia = calculate_sia(aqi, vr, ppd)
+
+    # ✅ Prepare sensor data for ThingsBoard
+    sensor_data = data.dict()
+    sensor_data.update({"AQI": aqi, "VR": vr, "PPD": ppd, "SIA": sia})
+
+    # ✅ Send data to ThingsBoard
+    send_data_to_thingsboard(sensor_data)
+
+    return {"AQI": aqi, "VR": vr, "PPD": ppd, "SIA": sia, "message": "Data sent to ThingsBoard"}
