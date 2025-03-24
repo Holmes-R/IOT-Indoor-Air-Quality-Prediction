@@ -7,7 +7,7 @@ from models.ekf_filter import apply_ekf
 from pydantic import BaseModel
 from api.thingsboard_api import send_data_to_thingsboard  # ✅ Import the function
 from api.iaq_calculations import calculate_aqi, calculate_vr, calculate_ppd, calculate_sia
-
+import requests 
 
 app = FastAPI()
 
@@ -15,25 +15,17 @@ app = FastAPI()
 xgb_model = joblib.load("models/xgb_air_quality_model.joblib")
 scaler = joblib.load("models/scaler.joblib")
 label_encoder = joblib.load("models/label_encoder.joblib") 
+AQI_API_URL = "https://api.waqi.info/feed/here/?token=8c006b8c7de3b31dbe8fe035a51ade51c787982b"
 
-'''xgb_model = joblib.load("models/xgb_air_quality_model.joblib")
-scaler = joblib.load("models/scaler.joblib")
-print("Scaler was trained on:", scaler.feature_names_in_)
-# Test Input Example
-test_input = np.array([[1.0, 1.5, 0.8, 40, 25, 1008, 55, 0.5]])  # Example "Moderate" case
 
-# Scale input
-test_scaled = scaler.transform(test_input)
 
-# Predict
-prediction = xgb_model.predict(test_scaled)
-print("Model Raw Prediction:", prediction)
-
-# Load label encoder
-le = joblib.load("models/label_encoder.joblib")
-predicted_category = le.inverse_transform(prediction)[0]
-print("Predicted Category:", predicted_category)'''
-
+def get_aqi_data():
+    response = requests.get(AQI_API_URL)
+    if response.status_code == 200:
+        aqi_data = response.json()
+        if "data" in aqi_data and "aqi" in aqi_data["data"]:
+            return aqi_data["data"]
+    return None
 
 # ✅ Define Input Schema for Air Quality Prediction
 class AirQualityInput(BaseModel):
@@ -58,6 +50,17 @@ def predict_air_quality(input_data: AirQualityInput):
     # ✅ Scale the input
     input_scaled = scaler.transform(input_df)
 
+    aqi_data = get_aqi_data()
+    
+    # ✅ Extract key parameters from AQI API
+    if aqi_data:
+        aqi = aqi_data.get("aqi", input_data.PM2_5)  # Use API AQI or fallback to local PM2.5
+        api_no2 = aqi_data["iaqi"].get("no2", {}).get("v", input_data.NO2)
+        api_o3 = aqi_data["iaqi"].get("o3", {}).get("v", input_data.O3)
+    else:
+        aqi = input_data.PM2_5  # Fallback to PM2.5 if API fails
+        api_no2, api_o3 = input_data.NO2, input_data.O3 
+
     # ✅ Apply EKF noise reduction
     filtered_data = apply_ekf(input_scaled.flatten())
 
@@ -76,6 +79,9 @@ def predict_air_quality(input_data: AirQualityInput):
 
     sensor_data = input_data.dict()
     sensor_data.update({
+         "API_AQI": aqi,
+        "API_NO2": api_no2,
+        "API_O3": api_o3,
         "Future_Air_Quality": future_state,
         "AQI": aqi,
         "PPD": ppd,
