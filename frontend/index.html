@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Air Quality Prediction</title>
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+    <title>User Context</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; }
-        .container { max-width: 500px; margin: auto; }
+        .container { max-width: 600px; margin: auto; }
         label { font-weight: bold; display: block; margin-top: 10px; }
-        select, input { width: 100%; padding: 8px; margin-top: 5px; }
+        select { width: 100%; padding: 8px; margin-top: 5px; }
         button { margin-top: 15px; padding: 10px; width: 100%; background: blue; color: white; border: none; }
-        .result { margin-top: 20px; padding: 10px; background: #f4f4f4; border-radius: 5px; }
     </style>
 </head>
 <body>
@@ -28,12 +28,6 @@
             <option value="general">General</option>
             <option value="asthma">Asthma</option>
             <option value="athlete">Athlete</option>
-            <option value="child">Child</option>
-            <option value="elderly">Elderly</option>
-            <option value="pregnant">Pregnant</option>
-            <option value="outdoor_worker">Outdoor Worker</option>
-            <option value="commuter">Commuter</option>
-            <option value="office_worker">Office Worker</option>
         </select>
         
         <label>Environment</label>
@@ -45,80 +39,28 @@
         <label>Daily Activity</label>
         <select id="daily_activity">
             <option value="exercise">Exercise</option>
-            <option value="workout">Workout</option>
             <option value="commute">Commute</option>
-            <option value="stay_home">Stay Home</option>
-            <option value="office_work">Office Work</option>
-            <option value="outdoor_work">Outdoor Work</option>
         </select>
         
         <button onclick="submitContext()">Next: Enter Sensor Data</button>
-        
-        <div id="sensorForm" style="display:none;">
-            <h2>Enter Sensor Data</h2>
-            <label>NH3</label><input type="number" id="NH3" step="0.1">
-            <label>NO2</label><input type="number" id="NO2" step="0.1">
-            <label>CO</label><input type="number" id="CO" step="0.1">
-            <label>PM2.5</label><input type="number" id="PM2_5" step="0.1">
-            <label>Temperature</label><input type="number" id="Temperature" step="0.1">
-            <label>Pressure</label><input type="number" id="Pressure" step="0.1">
-            <label>Humidity</label><input type="number" id="Humidity" step="0.1">
-            <label>O3</label><input type="number" id="O3" step="0.1">
-            
-            <button onclick="submitSensorData()">Get AQI Prediction</button>
-        </div>
-        
-        <div id="result" class="result" style="display:none;"></div>
     </div>
 
     <script>
-        let userContext = {};
-        
         function submitContext() {
-            userContext = {
+            let userContext = {
                 location_type: document.getElementById("location_type").value,
                 user_health: document.getElementById("user_health").value,
                 environment: document.getElementById("environment").value,
                 daily_activity: document.getElementById("daily_activity").value
             };
-            
+
             fetch("http://localhost:8000/context/", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(userContext)
             }).then(() => {
-                document.getElementById("sensorForm").style.display = "block";
-            });
-        }
-
-        function submitSensorData() {
-            let sensorData = {
-                NH3: parseFloat(document.getElementById("NH3").value),
-                NO2: parseFloat(document.getElementById("NO2").value),
-                Carbon_Monoxide: parseFloat(document.getElementById("CO").value),
-                PM2_5: parseFloat(document.getElementById("PM2_5").value),
-                Temperature: parseFloat(document.getElementById("Temperature").value),
-                Pressure: parseFloat(document.getElementById("Pressure").value),
-                Humidity: parseFloat(document.getElementById("Humidity").value),
-                O3: parseFloat(document.getElementById("O3").value)
-            };
-            
-            fetch("http://localhost:8000/predict/", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(sensorData)
-            })
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById("result").innerHTML = `
-                    <h3>Prediction Results:</h3>
-                    <p><b>Future Air Quality:</b> ${data.future_quality}</p>
-                    <p><b>Classified AQI:</b> ${data.classified_aqi}</p>
-                    <p><b>Health Impact:</b> ${data.health_impact}</p>
-                    <p><b>Health Advice:</b> ${data.health_advice}</p>
-                    <p><b>Lifestyle Guidance:</b> ${data.lifestyle_guidance}</p>
-                `;
-                document.getElementById("result").style.display = "block";
+                // ✅ Redirect to the Sensor Data page
+                window.location.href = "sensor.html";
             });
         }
     </script>
