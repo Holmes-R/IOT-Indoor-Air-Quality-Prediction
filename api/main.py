@@ -101,7 +101,6 @@ def predict_air_quality(input_data: AirQualityInput):
     # ✅ Predict future state using DTMC
     future_state = predict_next_state(predicted_category)
 
-    # ✅ Compute IAQ Metrics
     aqi = calculate_aqi(api_aqi, api_no2, api_o3)
     vr = calculate_vr(input_data.Pressure)
     ppd = calculate_ppd(input_data.Temperature, input_data.Humidity)
