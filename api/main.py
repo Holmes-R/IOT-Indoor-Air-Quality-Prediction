@@ -106,7 +106,6 @@ def predict_air_quality(input_data: AirQualityInput):
     ppd = calculate_ppd(input_data.Temperature, input_data.Humidity)
     sia = calculate_sia(aqi, vr, ppd)
 
-    # ✅ Classify based on user health & lifestyle
     health_response = classify_aqi_health(aqi, user_context["user_health"], user_context["daily_activity"])
 
     sensor_data = input_dict.copy()
