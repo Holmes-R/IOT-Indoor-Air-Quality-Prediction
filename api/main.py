@@ -11,6 +11,7 @@ from api.thingsboard_api import send_data_to_thingsboard
 from api.iaq_calculations import calculate_aqi, calculate_vr, calculate_ppd, calculate_sia, classify_aqi_health
 import requests
 from fastapi.middleware.cors import CORSMiddleware
+import time
 
 
 app = FastAPI()
@@ -35,7 +36,7 @@ def serve_sensor():
 xgb_model = joblib.load("models/xgb_air_quality_model.joblib")
 scaler = joblib.load("models/scaler.joblib")
 label_encoder = joblib.load("models/label_encoder.joblib")
-AQI_API_URL = "https://api.waqi.info/feed/here/?token=8c006b8c7de3b31dbe8fe035a51ade51c787982b"
+AQI_API_URL = "https://api.waqi.info/feed/Coimbatore/?token=8c006b8c7de3b31dbe8fe035a51ade51c787982b"
 
 def get_aqi_data():
     response = requests.get(AQI_API_URL)
@@ -133,3 +134,37 @@ def predict_air_quality(input_data: AirQualityInput):
         "health_advice": health_response["health_advice"],
         "lifestyle_guidance": health_response["lifestyle_guidance"]
     }
+
+
+def fetch_and_send_aqi():
+    """Fetch AQI data from API and send it to ThingsBoard"""
+    while True:
+        response = requests.get(AQI_API_URL)
+        if response.status_code == 200:
+            data = response.json()
+            if "data" in data and "aqi" in data["data"]:
+                extracted_data = {
+                    "A_AQI": data["data"]["aqi"],
+                    "A_CO": data["data"]["iaqi"].get("co", {}).get("v", 0),
+                    "A_NO2": data["data"]["iaqi"].get("no2", {}).get("v", 0),
+                    "A_O3": data["data"]["iaqi"].get("o3", {}).get("v", 0),
+                    "A_PM10": data["data"]["iaqi"].get("pm10", {}).get("v", 0),
+                    "A_PM25": data["data"]["iaqi"].get("pm25", {}).get("v", 0),
+                    "A_SO2": data["data"]["iaqi"].get("so2", {}).get("v", 0),
+                    "A_Temperature": data["data"]["iaqi"].get("t", {}).get("v", 0),
+                    "A_Pressure": data["data"]["iaqi"].get("p", {}).get("v", 0),
+                    "A_Humidity": data["data"]["iaqi"].get("h", {}).get("v", 0),
+                    "A_Wind_Speed": data["data"]["iaqi"].get("w", {}).get("v", 0),
+                    "A_Timestamp": data["data"]["time"]["iso"]
+                }
+                print("✅ Sending Data:", extracted_data)  # ✅ Debugging
+                send_data_to_thingsboard(extracted_data)
+
+        time.sleep(2)  
+
+@app.on_event("startup")
+def start_background_task():
+    """Start the background task when FastAPI starts"""
+    import threading
+    thread = threading.Thread(target=fetch_and_send_aqi, daemon=True)
+    thread.start()

@@ -6,11 +6,66 @@
     <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
     <title>User Context</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        .container { max-width: 600px; margin: auto; }
-        label { font-weight: bold; display: block; margin-top: 10px; }
-        select { width: 100%; padding: 8px; margin-top: 5px; }
-        button { margin-top: 15px; padding: 10px; width: 100%; background: blue; color: white; border: none; }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Poppins', sans-serif;
+        }
+        body {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            color: white;
+        }
+        h2 {
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+        label {
+            font-weight: bold;
+            display: block;
+            margin: 10px 0 5px;
+            text-align: left;
+            font-size: 14px;
+        }
+        select {
+            width: 100%;
+            padding: 10px;
+            border-radius: 6px;
+            border: none;
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #00c6ff;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            transition: 0.3s ease-in-out;
+            box-shadow: 0 3px 8px rgba(0, 198, 255, 0.3);
+        }
+        button:hover {
+            background: #007bbf;
+            box-shadow: 0 4px 10px rgba(0, 123, 191, 0.5);
+        }
     </style>
 </head>
 <body>
@@ -59,9 +114,7 @@
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(userContext)
             }).then(() => {
-                // ✅ Redirect to the Sensor Data page
                 window.location.href = "/sensor";
-
             });
         }
     </script>

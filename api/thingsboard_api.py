@@ -16,9 +16,9 @@ def send_data_to_thingsboard(sensor_data):
         response = requests.post(THINGSBOARD_URL, data=json.dumps(sensor_data), headers=headers)
 
         if response.status_code == 200:
-            print("✅ Data sent to ThingsBoard successfully!")
+            print(" Data sent to ThingsBoard successfully!")
         else:
-            print(f"❌ Failed to send data. Status Code: {response.status_code}, Response: {response.text}")
+            print(f"Failed to send data. Status Code: {response.status_code}, Response: {response.text}")
     
     except requests.exceptions.RequestException as e:
-        print(f"❌ Error sending data to ThingsBoard: {e}")
+        print(f" Error sending data to ThingsBoard: {e}")
