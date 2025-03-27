@@ -13,6 +13,10 @@ import requests
 from fastapi.middleware.cors import CORSMiddleware
 import time
 
+'''This FastAPI application is designed to predict air quality based on user input and external API data. 
+It integrates various models, including an XGBoost model for air quality prediction, a Kalman filter for data smoothing, and a DTMC model for future state prediction. 
+The application also fetches real-time AQI data and sends processed data to ThingsBoard for visualization.'''
+
 
 app = FastAPI()
 
@@ -74,33 +78,29 @@ def save_user_context(context: UserContextInput):
 @app.post("/predict/")
 def predict_air_quality(input_data: AirQualityInput):
     if not user_context:
-        raise HTTPException(status_code=400, detail="❌ User context not provided. Call /context/ first.")
+        raise HTTPException(status_code=400, detail=" User context not provided. Call /context/ first.")
 
     input_dict = input_data.dict()
 
-    # ✅ Fetch Real-Time AQI Data
     aqi_data = get_aqi_data()
     if aqi_data:
-        api_aqi = aqi_data.get("aqi", input_data.PM2_5)  # Use API AQI or fallback to local PM2.5
+        api_aqi = aqi_data.get("aqi", input_data.PM2_5)  
         api_no2 = aqi_data["iaqi"].get("no2", {}).get("v", input_data.NO2)
         api_o3 = aqi_data["iaqi"].get("o3", {}).get("v", input_data.O3)
     else:
-        api_aqi = input_data.PM2_5  # Fallback if API fails
+        api_aqi = input_data.PM2_5  
         api_no2, api_o3 = input_data.NO2, input_data.O3
 
-    # ✅ Ensure correct column order for ML model
     expected_features = scaler.feature_names_in_
     input_df = pd.DataFrame([input_dict], columns=expected_features)
     input_scaled = scaler.transform(input_df)
 
-    # ✅ Apply EKF noise reduction
     filtered_data = apply_ekf(input_scaled.flatten())
 
-    # ✅ Predict air quality category
     prediction_label = xgb_model.predict([filtered_data])[0]
+
     predicted_category = label_encoder.inverse_transform([prediction_label])[0]
 
-    # ✅ Predict future state using DTMC
     future_state = predict_next_state(predicted_category)
 
     aqi = calculate_aqi(api_aqi, api_no2, api_o3)
@@ -158,7 +158,7 @@ def fetch_and_send_aqi():
                     "A_Wind_Speed": data["data"]["iaqi"].get("w", {}).get("v", 0),
                     "A_Timestamp": data["data"]["time"]["iso"]
                 }
-                print("✅ Sending Data:", extracted_data)  # ✅ Debugging
+                print("Sending Data:", extracted_data) 
                 send_data_to_thingsboard(extracted_data)
 
         time.sleep(2)  
