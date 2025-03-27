@@ -1,6 +1,26 @@
 import numpy as np
 from filterpy.kalman import KalmanFilter
 
+
+'''This file applies an Extended Kalman Filter (EKF) to smooth sensor data.'''
+
+"""
+State and measurement dimensions.
+
+Initial state from the first data point.
+
+State transition matrix.
+
+Measurement matrix.
+
+High initial uncertainty.
+
+Measurement noise covariance.
+
+Process noise covariance.
+"""
+
+
 def apply_ekf(sensor_data):
     ekf = KalmanFilter(dim_x=1, dim_z=1)
     ekf.x = np.array([sensor_data[0]])  

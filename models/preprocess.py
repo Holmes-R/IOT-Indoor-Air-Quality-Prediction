@@ -7,9 +7,20 @@ from sklearn.decomposition import PCA
 
 # Data Cleaning & Preprocessing for Air Quality
 
-
 '''This script preprocesses indoor air pollution data by cleaning, transforming, and normalizing sensor readings. 
 It also applies Principal Component Analysis (PCA) and clustering techniques (K-Means and DBSCAN) to analyze air quality'''
+
+### Data Cleaning: Removed unnecessary columns, handled missing values.
+
+# Feature Engineering: Renamed columns, standardized sensor readings.
+
+# Dimensionality Reduction: Applied PCA for better visualization.
+
+# Clustering: Used K-Means and DBSCAN for air quality classification.
+
+# Labeling: Assigned meaningful air quality categories.
+
+# Export: Saved preprocessed data for further use in modeling.
 
 df = pd.read_csv("data/Indoor Air Pollution Data.csv", low_memory=False)
 
