@@ -33,10 +33,10 @@ from sklearn.metrics import accuracy_score
 file_path = "data/cleaned_indoor_air_pollution.csv"
 
 if not os.path.exists(file_path):
-    raise FileNotFoundError("❌ Processed dataset not found! Run preprocess.py first.")
+    raise FileNotFoundError("Processed dataset not found! Run preprocess.py first.")
 
 df = pd.read_csv(file_path)
-print("📌 Columns in Training Data:", df.columns.tolist())
+print("Columns in Training Data:", df.columns.tolist())
 
 df.columns = df.columns.str.strip().str.replace(" ", "_")
 
@@ -48,7 +48,7 @@ le = LabelEncoder()
 df["Air_Quality_Label"] = le.fit_transform(df["Air_Quality"])
 y = df["Air_Quality_Label"]
 
-print("📌 Original Class Distribution:", Counter(y))
+print(" Original Class Distribution:", Counter(y))
 
 df_poor = df[df["Air_Quality"] == "Poor"].sample(n=30_000, random_state=42)
 df_hazardous = df[df["Air_Quality"] == "Hazardous"]
@@ -62,7 +62,7 @@ y = df_balanced["Air_Quality_Label"]
 
 smote = SMOTE(sampling_strategy="not majority", random_state=42)
 X_resampled, y_resampled = smote.fit_resample(X, y)
-print("📌 New Class Distribution After SMOTE:", Counter(y_resampled))
+print("New Class Distribution After SMOTE:", Counter(y_resampled))
 
 X_train, X_test, y_train, y_test = train_test_split(X_resampled, y_resampled, test_size=0.2, random_state=42)
 
@@ -75,11 +75,11 @@ xgb_model.fit(X_train_scaled, y_train)
 
 y_pred = xgb_model.predict(X_test_scaled)
 accuracy = accuracy_score(y_test, y_pred)
-print(f"✅ Model Accuracy: {accuracy:.4f}")
+print(f"Model Accuracy: {accuracy:.4f}")
 
 os.makedirs("models", exist_ok=True)
 joblib.dump(xgb_model, "models/xgb_air_quality_model.joblib")
 joblib.dump(scaler, "models/scaler.joblib")
 joblib.dump(le, "models/label_encoder.joblib")
 
-print("✅ XGBoost Model Trained with SMOTE & Saved Successfully!")
+print("XGBoost Model Trained with SMOTE & Saved Successfully!")

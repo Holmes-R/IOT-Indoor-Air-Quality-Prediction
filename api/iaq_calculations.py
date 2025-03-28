@@ -5,7 +5,7 @@ import numpy as np
 '''This module provides functions to estimate various indoor air quality (IAQ) parameters such as AQI, ventilation rate, predicted percentage dissatisfied (PPD), and the overall State of Indoor Air (SIA) Index. 
 It also includes a function to classify AQI health impacts.'''
 
-
+           
 def calculate_aqi(pm25, no2, o3):
     """
     Approximate AQI Calculation using major pollutants.
