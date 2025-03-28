@@ -13,33 +13,33 @@
             font-family: 'Poppins', sans-serif;
         }
         body {
-            background: linear-gradient(135deg, #ff9a9e, #fad0c4);
+            background: linear-gradient(135deg, #3a7bd5, #3a6073);
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
         }
         .container {
-            background: rgba(255, 255, 255, 0.2);
-            backdrop-filter: blur(10px);
-            padding: 25px;
-            border-radius: 12px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(12px);
+            padding: 30px;
+            border-radius: 14px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
             width: 90%;
-            max-width: 400px;
+            max-width: 420px;
             text-align: center;
             color: white;
         }
         h2 {
             margin-bottom: 20px;
-            font-size: 24px;
+            font-size: 26px;
         }
         label {
             font-weight: bold;
             display: block;
             margin: 10px 0 5px;
             text-align: left;
-            font-size: 14px;
+            font-size: 15px;
         }
         input {
             width: 100%;
@@ -48,11 +48,17 @@
             border: none;
             font-size: 16px;
             margin-bottom: 15px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            outline: none;
+        }
+        input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
         }
         button {
             width: 100%;
             padding: 12px;
-            background: #ff758c;
+            background: #0072ff;
             border: none;
             border-radius: 6px;
             font-size: 16px;
@@ -60,11 +66,33 @@
             color: white;
             cursor: pointer;
             transition: 0.3s ease-in-out;
-            box-shadow: 0 3px 8px rgba(255, 117, 140, 0.3);
+            box-shadow: 0 3px 8px rgba(0, 114, 255, 0.3);
         }
         button:hover {
-            background: #ff3b6f;
-            box-shadow: 0 4px 10px rgba(255, 59, 111, 0.5);
+            background: #0056cc;
+            box-shadow: 0 4px 10px rgba(0, 86, 204, 0.5);
+        }
+        .result {
+            display: none;
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            text-align: left;
+            font-size: 15px;
+            box-shadow: 0 4px 8px rgba(255, 255, 255, 0.1);
+        }
+        .result h3 {
+            margin-bottom: 10px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            color: #ffffff;
+        }
+        .result p {
+            margin: 5px 0;
+            color: #e0e0e0;
+            font-size: 14px;
         }
     </style>
 </head>
@@ -72,14 +100,14 @@
     <div class="container">
         <h2>Enter Sensor Data</h2>
         
-        <label>NH3</label><input type="number" id="NH3" step="0.1">
-        <label>NO2</label><input type="number" id="NO2" step="0.1">
-        <label>CO</label><input type="number" id="CO" step="0.1">
-        <label>PM2.5</label><input type="number" id="PM2_5" step="0.1">
-        <label>Temperature</label><input type="number" id="Temperature" step="0.1">
-        <label>Pressure</label><input type="number" id="Pressure" step="0.1">
-        <label>Humidity</label><input type="number" id="Humidity" step="0.1">
-        <label>O3</label><input type="number" id="O3" step="0.1">
+        <label>NH3 (Ammonia in ppm)</label><input type="number" id="NH3" step="0.1" placeholder="Enter NH3 level">
+        <label>NO2 (Nitrogen Dioxide in ppm)</label><input type="number" id="NO2" step="0.1" placeholder="Enter NO2 level">
+        <label>CO (Carbon Monoxide in ppm)</label><input type="number" id="CO" step="0.1" placeholder="Enter CO level">
+        <label>PM2.5 (Particulate Matter in µg/m³)</label><input type="number" id="PM2_5" step="0.1" placeholder="Enter PM2.5 level">
+        <label>Temperature (°C)</label><input type="number" id="Temperature" step="0.1" placeholder="Enter Temperature">
+        <label>Pressure (hPa)</label><input type="number" id="Pressure" step="0.1" placeholder="Enter Pressure">
+        <label>Humidity (%)</label><input type="number" id="Humidity" step="0.1" placeholder="Enter Humidity">
+        <label>O3 (Ozone in ppm)</label><input type="number" id="O3" step="0.1" placeholder="Enter O3 level">
         
         <button onclick="submitSensorData()">Get AQI Prediction</button>
 
@@ -107,9 +135,12 @@
             .then(response => response.json())
             .then(data => {
                 document.getElementById("result").innerHTML = `
-                    <h3>Prediction Results:</h3>
+                    <h3>Prediction Results</h3>
                     <p><b>Future Air Quality:</b> ${data.future_quality}</p>
                     <p><b>Air Quality Index:</b> ${data.classified_aqi}</p>
+                    <p><b>Health Impact:</b> ${data.health_impact}</p>
+                    <p><b>Health Advice:</b> ${data.health_advice}</p>
+                    <p><b>Lifestyle Guidance:</b> ${data.lifestyle_guidance}</p>
                 `;
                 document.getElementById("result").style.display = "block";
             });

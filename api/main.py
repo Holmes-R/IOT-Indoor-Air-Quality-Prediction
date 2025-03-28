@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException 
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 import joblib
@@ -12,6 +12,8 @@ from api.iaq_calculations import calculate_aqi, calculate_vr, calculate_ppd, cal
 import requests
 from fastapi.middleware.cors import CORSMiddleware
 import time
+import os
+
 
 '''This FastAPI application is designed to predict air quality based on user input and external API data. 
 It integrates various models, including an XGBoost model for air quality prediction, a Kalman filter for data smoothing, and a DTMC model for future state prediction. 
@@ -28,6 +30,9 @@ app.add_middleware(
     allow_headers=["*"], 
 )
 app.mount("/static", StaticFiles(directory="frontend"), name="static")
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+FRONTEND_DIR = os.path.join(BASE_DIR, "frontend")
 
 @app.get("/")
 def serve_frontend():
@@ -36,6 +41,8 @@ def serve_frontend():
 @app.get("/sensor")
 def serve_sensor():
     return FileResponse("frontend/sensor.html")
+
+
 
 
 xgb_model = joblib.load("models/xgb_air_quality_model.joblib")
