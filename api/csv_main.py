@@ -15,23 +15,20 @@ from sklearn.preprocessing import StandardScaler
 
 app = FastAPI()
 
-# Load sensor data from CSV
-CSV_FILE_PATH = "data/Indoor Air Pollution Data.csv"
+CSV_FILE_PATH = "data/Indoor Air Pollution Data.csv"    
 sensor_data_df = pd.read_csv(CSV_FILE_PATH)
 
-# Select required columns
 selected_columns = ["NH3", "NO2", "CO", "PM2.5", "Temp", "Pressure", "Humidity", "O3"]
 sensor_data_df = sensor_data_df[selected_columns]
 
-# Load scaler and model
+
 xgb_model = joblib.load("models/xgb_air_quality_model.joblib")
 scaler = joblib.load("models/scaler.joblib")
 label_encoder = joblib.load("models/label_encoder.joblib")
 
-current_index = 0  # Track the current row
-user_confirmation = False  # Flag for user confirmation
+current_index = 0  
+user_confirmation = False  
 
-# IAQ Calculation Functions
 def calculate_aqi(pm25, no2, o3):
     pm25_breakpoints = [0, 12, 35.4, 55.4, 150.4, 250.4, 500]
     no2_breakpoints = [0, 53, 100, 360, 649, 1249, 2049]
@@ -57,20 +54,36 @@ def calculate_sia(aqi, vr, ppd):
     W_AQI, W_VR, W_PPD = 0.5, 0.3, 0.2
     return round((W_AQI * aqi) + (W_VR * vr) + (W_PPD * (100 - ppd)), 2)
 
+CSV_FILE_PATH_2 = "data/cleaned_indoor_air_pollution.csv"
+sensor_data_df_2 = pd.read_csv(CSV_FILE_PATH_2)
+
+selected_columns_2 = ["Air_Quality"]
+sensor_data_df_2 = sensor_data_df_2[selected_columns_2]
+
 @app.get("/get_next_data/")
 def get_next_data():
     global current_index
-    if current_index >= len(sensor_data_df):
+    if current_index >= len(sensor_data_df) or current_index >= len(sensor_data_df_2):
         return JSONResponse(content={"message": "No more sensor data available."}, status_code=400)
 
+    # Fetch the same row from both datasets
     sensor_data = sensor_data_df.iloc[current_index].to_dict()
+    air_quality_data = sensor_data_df_2.iloc[current_index].to_dict()
+
+    # Compute AQI, VR, PPD, and SIA
     aqi = calculate_aqi(sensor_data["PM2.5"], sensor_data["NO2"], sensor_data["O3"])
     vr = calculate_vr(sensor_data["CO"])
     ppd = calculate_ppd(sensor_data["Temp"], sensor_data["Humidity"])
     sia = calculate_sia(aqi, vr, ppd)
+
     sensor_data.update({"AQI": aqi, "VR": vr, "PPD": ppd, "SIA": sia})
+    sensor_data.update(air_quality_data)  # Add Air_Quality column
 
     return {"sensor_data": sensor_data, "message": "Confirm to send this data."}
+
+
+
+
 
 @app.post("/confirm_send/")
 def confirm_send():
@@ -116,3 +129,4 @@ def send_sensor_data_loop():
 def start_background_task():
     thread = threading.Thread(target=send_sensor_data_loop, daemon=True)
     thread.start()
+
