@@ -129,4 +129,3 @@ def send_sensor_data_loop():
 def start_background_task():
     thread = threading.Thread(target=send_sensor_data_loop, daemon=True)
     thread.start()
-
